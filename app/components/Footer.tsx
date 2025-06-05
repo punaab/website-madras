@@ -31,7 +31,7 @@ const Footer = () => {
           </Link>
         </div>
         <div className="mt-4 text-center text-gray-500 text-xs">
-          © {new Date().getFullYear()} Madras Branch. All rights reserved.
+          © {new Date().getFullYear()} Madras Ward. All rights reserved.
         </div>
       </div>
     </footer>

@@ -33,9 +33,12 @@ export default async function Home() {
 
           {/* Welcome Text */}
           <div className="text-center py-8 md:py-12">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-800">
-              Welcome to Madras
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+              Welcome to Madras Ward
             </h1>
+            <p className="text-xl text-gray-600">
+              A warm welcome to all visitors
+            </p>
           </div>
         </section>
 
