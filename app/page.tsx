@@ -12,13 +12,13 @@ export default async function Home() {
         {/* Hero Section */}
         <section className="relative h-[60vh] w-full">
           <Image
-            src="/hero-image.jpg"
-            alt="Hero Image"
+            src="/assets/images/Christ-Church-Symbol.png"
+            alt="Christ Church Symbol"
             fill
-            className="object-cover"
+            className="object-contain bg-white"
             priority
           />
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
             <h1 className="text-5xl font-bold text-white text-center">
               Welcome to Madras
             </h1>
