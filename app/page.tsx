@@ -27,7 +27,7 @@ export default async function Home() {
 
         {/* Content Sections */}
         <section id="sacrament" className="py-16 px-4 max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold mb-8 text-gray-800">Sacrament</h2>
+          <h2 className="section-title text-3xl mb-8 text-gray-800">Sacrament</h2>
           <div className="prose max-w-none">
             {content.filter(item => item.section === 'sacrament').map(item => (
               <div key={item.id} className="mb-8">
@@ -39,7 +39,7 @@ export default async function Home() {
         </section>
 
         <section id="message" className="py-16 px-4 max-w-7xl mx-auto bg-gray-50">
-          <h2 className="text-3xl font-bold mb-8 text-gray-800">Message</h2>
+          <h2 className="section-title text-3xl mb-8 text-gray-800">Message</h2>
           <div className="prose max-w-none">
             {content.filter(item => item.section === 'message').map(item => (
               <div key={item.id} className="mb-8">
@@ -51,7 +51,7 @@ export default async function Home() {
         </section>
 
         <section id="announcements" className="py-16 px-4 max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold mb-8 text-gray-800">Announcements</h2>
+          <h2 className="section-title text-3xl mb-8 text-gray-800">Announcements</h2>
           <div className="prose max-w-none">
             {content.filter(item => item.section === 'announcements').map(item => (
               <div key={item.id} className="mb-8">
@@ -63,7 +63,7 @@ export default async function Home() {
         </section>
 
         <section id="more" className="py-16 px-4 max-w-7xl mx-auto bg-gray-50">
-          <h2 className="text-3xl font-bold mb-8 text-gray-800">More</h2>
+          <h2 className="section-title text-3xl mb-8 text-gray-800">More</h2>
           <div className="prose max-w-none">
             {content.filter(item => item.section === 'more').map(item => (
               <div key={item.id} className="mb-8">
