@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import { getContent } from '@/lib/content'
 import Navigation from './components/Navigation'
+import Footer from './components/Footer'
 
 export default async function Home() {
   const content = await getContent()
@@ -87,6 +88,7 @@ export default async function Home() {
           </div>
         </section>
       </main>
+      <Footer />
     </>
   )
 } 
