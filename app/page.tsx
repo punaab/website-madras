@@ -10,16 +10,29 @@ export default async function Home() {
       <Navigation />
       <main className="min-h-screen pt-16">
         {/* Hero Section */}
-        <section className="relative h-[60vh] w-full">
-          <Image
-            src="/assets/images/Christ-Church-Symbol.png"
-            alt="Christ Church Symbol"
-            fill
-            className="object-contain bg-white"
-            priority
-          />
-          <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-            <h1 className="text-5xl font-bold text-white text-center">
+        <section className="relative w-full bg-white">
+          {/* Diagonal Design Elements */}
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute -left-10 top-0 w-40 h-full bg-white transform rotate-12 opacity-50"></div>
+            <div className="absolute -right-10 top-0 w-40 h-full bg-white transform -rotate-12 opacity-50"></div>
+            <div className="absolute left-1/4 top-0 w-40 h-full bg-white transform rotate-12 opacity-30"></div>
+            <div className="absolute right-1/4 top-0 w-40 h-full bg-white transform -rotate-12 opacity-30"></div>
+          </div>
+          
+          {/* Image Container */}
+          <div className="relative h-[50vh] md:h-[60vh] w-full max-w-4xl mx-auto px-4">
+            <Image
+              src="/assets/images/Christ-Church-Symbol.png"
+              alt="Christ Church Symbol"
+              fill
+              className="object-contain"
+              priority
+            />
+          </div>
+
+          {/* Welcome Text */}
+          <div className="text-center py-8 md:py-12">
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-800">
               Welcome to Madras
             </h1>
           </div>
