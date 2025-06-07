@@ -1,59 +1,41 @@
 import NextAuth from 'next-auth'
-import CredentialsProvider from 'next-auth/providers/credentials'
-import { PrismaClient } from '@prisma/client'
-import { compare } from 'bcrypt'
+import EmailProvider from 'next-auth/providers/email'
+import { PrismaClient, Role } from '@prisma/client'
+import { PrismaAdapter } from '@auth/prisma-adapter'
 
 const prisma = new PrismaClient()
 
 const handler = NextAuth({
+  adapter: PrismaAdapter(prisma),
   providers: [
-    CredentialsProvider({
-      name: 'Credentials',
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
+    EmailProvider({
+      server: {
+        host: process.env.EMAIL_SERVER_HOST,
+        port: process.env.EMAIL_SERVER_PORT,
+        auth: {
+          user: process.env.EMAIL_SERVER_USER,
+          pass: process.env.EMAIL_SERVER_PASSWORD,
+        },
       },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          return null
-        }
-
-        const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email,
-          },
-        })
-
-        if (!user) {
-          return null
-        }
-
-        const isPasswordValid = await compare(credentials.password, user.password)
-
-        if (!isPasswordValid) {
-          return null
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role as 'USER' | 'ADMIN',
-        };
-      }
-    })
+      from: process.env.EMAIL_FROM,
+    }),
   ],
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = user.role
-        token.id = user.id
+        const dbUser = await prisma.user.findUnique({
+          where: { email: user.email! },
+        })
+        if (dbUser) {
+          token.role = dbUser.role
+          token.id = dbUser.id
+        }
       }
       return token
     },
     async session({ session, token }) {
       if (session?.user) {
-        session.user.role = token.role
+        session.user.role = token.role as Role
         session.user.id = token.id as string
       }
       return session
@@ -61,6 +43,7 @@ const handler = NextAuth({
   },
   pages: {
     signIn: '/auth/signin',
+    verifyRequest: '/auth/verify-request',
   },
   session: {
     strategy: 'jwt',
