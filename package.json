@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate --schema=./prisma/schema.production.prisma && next build",
-    "start": "prisma db push --schema=./prisma/schema.production.prisma && next start",
+    "start": "prisma db push --schema=./prisma/schema.production.prisma --force-reset && next start",
     "lint": "next lint",
     "postinstall": "prisma generate",
     "db:push": "prisma db push",
