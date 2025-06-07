@@ -1,59 +1,137 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { authOptions } from '@/lib/auth'
+import prisma from '@/lib/prisma'
 
 export async function GET() {
   try {
-    const content = await prisma.content.findMany({
+    const contents = await prisma.content.findMany({
       orderBy: {
-        order: 'asc',
-      },
+        order: 'asc'
+      }
     })
-    return NextResponse.json(content)
+
+    return new NextResponse(JSON.stringify(contents), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    })
   } catch (error) {
-    return NextResponse.json({ error: 'Error fetching content' }, { status: 500 })
+    console.error('Error fetching content:', error)
+    return new NextResponse(JSON.stringify({ error: 'Internal Server Error' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    })
   }
 }
 
 export async function POST(request: Request) {
-  const session = await getServerSession()
-  if (!session) {
+  const session = await getServerSession(authOptions)
+  if (!session || session.user.role !== 'ADMIN') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   try {
     const data = await request.json()
+    
+    // Generate a unique section identifier
+    const section = `section_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    
+    // Get the highest current order
+    const highestOrder = await prisma.content.findFirst({
+      orderBy: {
+        order: 'desc'
+      },
+      select: {
+        order: true
+      }
+    })
+
     const content = await prisma.content.create({
       data: {
-        ...data,
-        userId: session.user?.id,
+        section,
+        title: data.title,
+        content: data.content,
+        userId: session.user.id,
+        order: (highestOrder?.order ?? -1) + 1 // Set order to be one more than the highest
       },
     })
     return NextResponse.json(content)
   } catch (error) {
-    return NextResponse.json({ error: 'Error creating content' }, { status: 500 })
+    console.error('Error creating content:', error)
+    return NextResponse.json({ 
+      error: 'Error creating content',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
   }
 }
 
 export async function PUT(request: Request) {
-  const session = await getServerSession()
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
   try {
-    const data = await request.json()
-    const content = await prisma.content.update({
-      where: { id: data.id },
-      data: {
-        ...data,
-        userId: session.user?.id,
-      },
+    const session = await getServerSession(authOptions)
+    
+    if (!session?.user) {
+      return new NextResponse(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' }
+      })
+    }
+
+    if (session.user.role !== 'ADMIN') {
+      return new NextResponse(JSON.stringify({ error: 'Forbidden' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' }
+      })
+    }
+
+    const contents = await request.json()
+
+    // Validate the request body
+    if (!Array.isArray(contents)) {
+      return new NextResponse(JSON.stringify({ error: 'Invalid request body' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      })
+    }
+
+    // Use a transaction to ensure all updates succeed or fail together
+    const updatedContents = await prisma.$transaction(
+      contents.map(content => 
+        prisma.content.upsert({
+          where: { section: content.section },
+          update: {
+            title: content.title,
+            content: content.content,
+            user: { connect: { id: session.user.id } },
+            order: content.order
+          },
+          create: {
+            section: content.section,
+            title: content.title,
+            content: content.content,
+            user: { connect: { id: session.user.id } },
+            order: content.order
+          }
+        })
+      )
+    )
+
+    // Sort the results by order before returning
+    const sortedContents = updatedContents.sort((a, b) => 
+      (a.order || 0) - (b.order || 0)
+    )
+
+    return new NextResponse(JSON.stringify(sortedContents), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
     })
-    return NextResponse.json(content)
   } catch (error) {
-    return NextResponse.json({ error: 'Error updating content' }, { status: 500 })
+    console.error('Error updating content:', error)
+    return new NextResponse(JSON.stringify({ 
+      error: 'Internal Server Error',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    })
   }
 } 

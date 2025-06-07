@@ -78,4 +78,10 @@ Access the admin portal at `/admin` after deployment. Use the credentials create
 
 ## License
 
-This project is licensed under the MIT License. 
+This project is licensed under the MIT License.
+
+## Editor Integration
+
+This project uses TinyMCE for rich text editing in the admin dashboard. The TinyMCE API key and integration details can be managed via your TinyMCE account.
+
+**TinyMCE API Source:** [https://www.tiny.cloud/my-account/integrate/#html](https://www.tiny.cloud/my-account/integrate/#html) 
