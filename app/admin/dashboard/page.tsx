@@ -7,6 +7,8 @@ import { signOut } from 'next-auth/react'
 import Link from 'next/link'
 import { Editor } from '@tinymce/tinymce-react'
 import { PlusIcon, TrashIcon, ArrowUpIcon, ArrowDownIcon } from '@heroicons/react/24/outline'
+import FlashMessage from '@/app/components/FlashMessage'
+import Image from 'next/image'
 
 interface Content {
   section: string
@@ -14,6 +16,13 @@ interface Content {
   title: string
   userId: string
   order?: number
+}
+
+interface Photo {
+  id: string
+  url: string
+  title: string
+  order: number
 }
 
 export default function AdminDashboard() {
@@ -35,6 +44,11 @@ export default function AdminDashboard() {
   const [mounted, setMounted] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
+  const [photos, setPhotos] = useState<Photo[]>([])
+  const [newPhotoTitle, setNewPhotoTitle] = useState('')
+  const [newPhotoFile, setNewPhotoFile] = useState<File | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   // Handle authentication state
   useEffect(() => {
@@ -80,6 +94,23 @@ export default function AdminDashboard() {
 
     fetchContent()
   }, [session, status])
+
+  // Add new useEffect for photos
+  useEffect(() => {
+    const fetchPhotos = async () => {
+      try {
+        const response = await fetch('/api/photos')
+        if (response.ok) {
+          const data = await response.json()
+          setPhotos(data)
+        }
+      } catch (error) {
+        console.error('Error fetching photos:', error)
+      }
+    }
+
+    fetchPhotos()
+  }, [])
 
   useEffect(() => {
     setMounted(true)
@@ -403,6 +434,82 @@ export default function AdminDashboard() {
     readonly: isMobile
   };
 
+  const handlePhotoUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPhotoFile || !newPhotoTitle) return;
+
+    setIsUploading(true);
+    try {
+      // Create a FormData object
+      const formData = new FormData();
+      formData.append('file', newPhotoFile);
+      formData.append('title', newPhotoTitle);
+
+      // Upload the file
+      const uploadResponse = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload photo');
+      }
+
+      const { url } = await uploadResponse.json();
+
+      // Create the photo record
+      const photoResponse = await fetch('/api/photos', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url,
+          title: newPhotoTitle,
+        }),
+      });
+
+      if (!photoResponse.ok) {
+        throw new Error('Failed to create photo record');
+      }
+
+      const newPhoto = await photoResponse.json();
+      setPhotos([...photos, newPhoto]);
+      setNewPhotoTitle('');
+      setNewPhotoFile(null);
+      setMessage({ type: 'success', text: 'Photo uploaded successfully' });
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+      setMessage({ type: 'error', text: 'Failed to upload photo' });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDeletePhoto = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this photo?')) return;
+
+    try {
+      const response = await fetch(`/api/photos/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete photo');
+      }
+
+      setPhotos(photos.filter(photo => photo.id !== id));
+      setMessage({ type: 'success', text: 'Photo deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting photo:', error);
+      setMessage({ type: 'error', text: 'Failed to delete photo' });
+    }
+  };
+
+  const handleCloseMessage = () => {
+    setMessage(null);
+  };
+
   if (status === 'loading' || isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -591,7 +698,107 @@ export default function AdminDashboard() {
             </button>
           </div>
         </div>
+
+        {/* Photo Management Section */}
+        <div className="mt-8 bg-white shadow sm:rounded-lg">
+          <div className="px-4 py-5 sm:p-6">
+            <h3 className="text-lg font-medium leading-6 text-gray-900">
+              Photo Management
+            </h3>
+            <div className="mt-2 max-w-xl text-sm text-gray-500">
+              <p>Upload and manage photos for the slideshow.</p>
+            </div>
+            <form onSubmit={handlePhotoUpload} className="mt-5">
+              <div className="space-y-4">
+                <div>
+                  <label
+                    htmlFor="photo-title"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Photo Title
+                  </label>
+                  <input
+                    type="text"
+                    id="photo-title"
+                    value={newPhotoTitle}
+                    onChange={(e) => setNewPhotoTitle(e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                    required
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="photo-file"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Photo File
+                  </label>
+                  <input
+                    type="file"
+                    id="photo-file"
+                    accept="image/*"
+                    onChange={(e) => setNewPhotoFile(e.target.files?.[0] || null)}
+                    className="mt-1 block w-full text-sm text-gray-500
+                      file:mr-4 file:py-2 file:px-4
+                      file:rounded-md file:border-0
+                      file:text-sm file:font-semibold
+                      file:bg-blue-50 file:text-blue-700
+                      hover:file:bg-blue-100"
+                    required
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={isUploading}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                >
+                  {isUploading ? 'Uploading...' : 'Upload Photo'}
+                </button>
+              </div>
+            </form>
+
+            {/* Photo Grid */}
+            <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {photos.map((photo) => (
+                <div
+                  key={photo.id}
+                  className="relative group bg-white rounded-lg shadow overflow-hidden"
+                >
+                  <div className="relative h-48">
+                    <Image
+                      src={photo.url}
+                      alt={photo.title}
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="p-4">
+                    <h4 className="text-sm font-medium text-gray-900">
+                      {photo.title}
+                    </h4>
+                    <button
+                      onClick={() => handleDeletePhoto(photo.id)}
+                      className="mt-2 inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </main>
+
+      {/* Flash Message */}
+      {message && (
+        <FlashMessage
+          message={message.text}
+          type={message.type}
+          onClose={handleCloseMessage}
+        />
+      )}
     </div>
   )
 } 

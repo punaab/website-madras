@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRef } from 'react'
 import Link from 'next/link'
 import Footer from './components/Footer'
+import PhotoSlideshow from './components/PhotoSlideshow'
 
 interface Content {
   section: string
@@ -12,12 +13,20 @@ interface Content {
   order?: number
 }
 
+interface Photo {
+  id: string
+  url: string
+  title: string
+  order: number
+}
+
 export default function Home() {
   const [contents, setContents] = useState<Content[]>([])
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [currentDate, setCurrentDate] = useState('')
   const dateRef = useRef<HTMLDivElement>(null)
+  const [photos, setPhotos] = useState<Photo[]>([])
 
   useEffect(() => {
     const fetchContent = async () => {
@@ -75,6 +84,22 @@ export default function Home() {
     }, timeUntilMidnight)
 
     return () => clearTimeout(timer)
+  }, [])
+
+  useEffect(() => {
+    const fetchPhotos = async () => {
+      try {
+        const response = await fetch('/api/photos')
+        if (response.ok) {
+          const data = await response.json()
+          setPhotos(data)
+        }
+      } catch (error) {
+        console.error('Error fetching photos:', error)
+      }
+    }
+
+    fetchPhotos()
   }, [])
 
   const scrollToContent = () => {
@@ -158,7 +183,7 @@ export default function Home() {
       </div>
 
       {/* Content Section */}
-      <div className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pb-24">
+      <div className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pb-24 mb-8">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl sm:tracking-tight lg:text-6xl">
             MADRAS WARD
@@ -186,6 +211,13 @@ export default function Home() {
           )}
         </div>
       </div>
+
+      {/* Photo Slideshow */}
+      {photos.length > 0 && (
+        <div className="mb-8">
+          <PhotoSlideshow photos={photos} />
+        </div>
+      )}
 
       {/* Footer */}
       <Footer />
