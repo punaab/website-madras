@@ -39,8 +39,9 @@ export async function PUT(
       data: {
         content: data.content,
         title: data.title,
-        order: typeof data.order === 'string' ? parseInt(data.order, 10) : (typeof data.order === 'number' ? data.order : 0),
-        user: { connect: { id: session.user.id } },
+        ...(typeof data.order === 'number' && { order: data.order }),
+        ...(typeof data.order === 'string' && !isNaN(parseInt(data.order, 10)) && { order: parseInt(data.order, 10) }),
+        userId: session.user.id,
       },
     });
 
@@ -63,6 +64,7 @@ export async function PUT(
   }
 }
 
+// DELETE handler remains unchanged
 export async function DELETE(
   request: Request,
   { params }: { params: { section: string } }
@@ -85,7 +87,6 @@ export async function DELETE(
 
     const { section } = params;
 
-    // Check if the section exists
     const existingContent = await prisma.content.findUnique({
       where: { section },
     });
@@ -97,7 +98,6 @@ export async function DELETE(
       });
     }
 
-    // Delete the section
     await prisma.content.delete({
       where: { section },
     });
