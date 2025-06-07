@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { ContentUpdateInput } from '@prisma/client'
 
 export async function PUT(
   request: Request,
@@ -40,7 +41,7 @@ export async function PUT(
       data: {
         content: data.content,
         title: data.title,
-        order: typeof data.order === 'number' ? data.order : undefined,
+        order: typeof data.order === 'string' ? parseInt(data.order, 10) : (typeof data.order === 'number' ? data.order : 0),
         user: { connect: { id: session.user.id } }
       }
     })
