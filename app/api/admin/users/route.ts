@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { hash } from 'bcrypt'
 import prisma from '@/lib/prisma'
 import { authOptions } from '@/lib/auth'
 
@@ -20,6 +19,8 @@ export async function GET() {
         name: true,
         email: true,
         role: true,
+        emailVerified: true,
+        image: true,
       },
       orderBy: {
         name: 'asc',
@@ -45,9 +46,9 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json()
-    const { email, name, password } = body
+    const { email, name } = body
 
-    if (!email || !name || !password) {
+    if (!email || !name) {
       return new NextResponse('Missing required fields', { status: 400 })
     }
 
@@ -60,15 +61,11 @@ export async function POST(request: Request) {
       return new NextResponse('User already exists', { status: 400 })
     }
 
-    // Hash password
-    const hashedPassword = await hash(password, 12)
-
     // Create user
     const user = await prisma.user.create({
       data: {
         email,
         name,
-        password: hashedPassword,
         role: 'ADMIN',
       },
       select: {
@@ -76,11 +73,30 @@ export async function POST(request: Request) {
         email: true,
         name: true,
         role: true,
-        createdAt: true,
+        emailVerified: true,
+        image: true,
       },
     })
 
-    return NextResponse.json(user)
+    // Create a verification token for the user
+    const token = crypto.randomUUID()
+    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+
+    await prisma.verificationToken.create({
+      data: {
+        identifier: email,
+        token,
+        expires
+      }
+    })
+
+    // In a real application, you would send an email with the setup link
+    // For now, we'll just return the token
+    return NextResponse.json({
+      user,
+      setupToken: token,
+      expires
+    })
   } catch (error) {
     console.error('Error creating user:', error)
     return new NextResponse('Internal Server Error', { status: 500 })
