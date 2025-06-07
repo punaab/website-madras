@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { auth } from '@/lib/auth'
 import prisma from '@/lib/prisma'
-import { authOptions } from '@/lib/auth'
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = auth()
     
     // Check if user is authenticated and is an admin
     if (!session?.user || session.user.role !== 'ADMIN') {

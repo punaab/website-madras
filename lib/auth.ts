@@ -1,77 +1,54 @@
-import { NextAuthOptions } from 'next-auth'
-import CredentialsProvider from 'next-auth/providers/credentials'
-import prisma from './prisma'
-import { compare } from 'bcrypt'
-import { User } from '@prisma/client'
+import NextAuth from 'next-auth'
+import EmailProvider from 'next-auth/providers/email'
+import { PrismaClient, Role } from '@prisma/client'
+import { PrismaAdapter } from '@auth/prisma-adapter'
+import { JWT } from 'next-auth/jwt'
 
-// Simple in-memory rate limiting
-const loginAttempts = new Map<string, { count: number; timestamp: number }>()
-const MAX_ATTEMPTS = 5
-const WINDOW_MS = 15 * 60 * 1000 // 15 minutes
+const prisma = new PrismaClient()
 
-export const authOptions: NextAuthOptions = {
+export const authOptions = {
+  adapter: PrismaAdapter(prisma),
   providers: [
-    CredentialsProvider({
-      name: 'credentials',
-      credentials: {
-        email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' }
+    EmailProvider({
+      server: {
+        host: process.env.EMAIL_SERVER_HOST,
+        port: process.env.EMAIL_SERVER_PORT,
+        auth: {
+          user: process.env.EMAIL_SERVER_USER,
+          pass: process.env.EMAIL_SERVER_PASSWORD,
+        },
       },
-      async authorize(credentials): Promise<User | null> {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error('Invalid credentials')
-        }
-
-        const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email
-          }
-        })
-
-        if (!user || !user?.password) {
-          throw new Error('Invalid credentials')
-        }
-
-        const isCorrectPassword = await compare(
-          credentials.password,
-          user.password
-        )
-
-        if (!isCorrectPassword) {
-          throw new Error('Invalid credentials')
-        }
-
-        return user
-      }
-    })
+      from: process.env.EMAIL_FROM,
+    }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user }: { token: JWT; user: any }) {
       if (user) {
-        return {
-          ...token,
-          id: user.id,
-          role: user.role
+        const dbUser = await prisma.user.findUnique({
+          where: { email: user.email! },
+        })
+        if (dbUser) {
+          token.role = dbUser.role
+          token.id = dbUser.id
         }
       }
       return token
     },
-    async session({ session, token }) {
-      return {
-        ...session,
-        user: {
-          ...session.user,
-          id: token.id,
-          role: token.role
-        }
+    async session({ session, token }: { session: any; token: JWT }) {
+      if (session?.user) {
+        session.user.role = token.role as Role
+        session.user.id = token.id as string
       }
+      return session
     }
   },
   pages: {
-    signIn: '/login'
+    signIn: '/auth/signin',
+    verifyRequest: '/auth/verify-request',
   },
   session: {
-    strategy: 'jwt'
+    strategy: 'jwt' as const,
   },
-  secret: process.env.NEXTAUTH_SECRET
-} 
+}
+
+export const { auth } = NextAuth(authOptions) 

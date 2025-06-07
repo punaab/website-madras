@@ -1,29 +1,30 @@
 import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { auth } from '@/lib/auth'
 import prisma from '@/lib/prisma'
-import { authOptions } from '@/lib/auth'
+import { Role } from '@prisma/client'
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions)
-    
-    // Check if user is authenticated and is an admin
-    if (!session?.user || session.user.role !== 'ADMIN') {
+    const session = await auth()
+    if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Fetch all users
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email! },
+    })
+
+    if (!user || user.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     const users = await prisma.user.findMany({
       select: {
         id: true,
         name: true,
         email: true,
         role: true,
-        emailVerified: true,
-        image: true,
-      },
-      orderBy: {
-        name: 'asc',
+        isSuperUser: true,
       },
     })
 
@@ -31,74 +32,43 @@ export async function GET() {
   } catch (error) {
     console.error('Error fetching users:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch users' },
+      { error: 'Internal Server Error' },
       { status: 500 }
     )
   }
 }
 
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions)
-
-  if (!session || session.user.role !== 'ADMIN') {
-    return new NextResponse('Unauthorized', { status: 401 })
-  }
-
   try {
-    const body = await request.json()
-    const { email, name } = body
-
-    if (!email || !name) {
-      return new NextResponse('Missing required fields', { status: 400 })
+    const session = await auth()
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email! },
     })
 
-    if (existingUser) {
-      return new NextResponse('User already exists', { status: 400 })
+    if (!user || user.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    // Create user
-    const user = await prisma.user.create({
+    const data = await request.json()
+    const newUser = await prisma.user.create({
       data: {
-        email,
-        name,
-        role: 'ADMIN',
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        emailVerified: true,
-        image: true,
+        email: data.email,
+        name: data.name || '',
+        role: data.role as Role,
+        isSuperUser: data.isSuperUser || false,
       },
     })
 
-    // Create a verification token for the user
-    const token = crypto.randomUUID()
-    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
-
-    await prisma.verificationToken.create({
-      data: {
-        identifier: email,
-        token,
-        expires
-      }
-    })
-
-    // In a real application, you would send an email with the setup link
-    // For now, we'll just return the token
-    return NextResponse.json({
-      user,
-      setupToken: token,
-      expires
-    })
+    return NextResponse.json(newUser)
   } catch (error) {
     console.error('Error creating user:', error)
-    return new NextResponse('Internal Server Error', { status: 500 })
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 }
+    )
   }
 } 

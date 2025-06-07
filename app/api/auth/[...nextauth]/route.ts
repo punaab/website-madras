@@ -1,53 +1,5 @@
 import NextAuth from 'next-auth'
-import EmailProvider from 'next-auth/providers/email'
-import { PrismaClient, Role } from '@prisma/client'
-import { PrismaAdapter } from '@auth/prisma-adapter'
+import { authOptions } from '@/lib/auth'
 
-const prisma = new PrismaClient()
-
-const handler = NextAuth({
-  adapter: PrismaAdapter(prisma),
-  providers: [
-    EmailProvider({
-      server: {
-        host: process.env.EMAIL_SERVER_HOST,
-        port: process.env.EMAIL_SERVER_PORT,
-        auth: {
-          user: process.env.EMAIL_SERVER_USER,
-          pass: process.env.EMAIL_SERVER_PASSWORD,
-        },
-      },
-      from: process.env.EMAIL_FROM,
-    }),
-  ],
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        const dbUser = await prisma.user.findUnique({
-          where: { email: user.email! },
-        })
-        if (dbUser) {
-          token.role = dbUser.role
-          token.id = dbUser.id
-        }
-      }
-      return token
-    },
-    async session({ session, token }) {
-      if (session?.user) {
-        session.user.role = token.role as Role
-        session.user.id = token.id as string
-      }
-      return session
-    }
-  },
-  pages: {
-    signIn: '/auth/signin',
-    verifyRequest: '/auth/verify-request',
-  },
-  session: {
-    strategy: 'jwt',
-  },
-})
-
+const handler = NextAuth(authOptions)
 export { handler as GET, handler as POST } 

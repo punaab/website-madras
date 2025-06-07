@@ -80,7 +80,7 @@ model VerificationToken {
 model Photo {
   id        String   @id @default(cuid())
   url       String
-  alt       String?
+  title     String   @default("")
   order     Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

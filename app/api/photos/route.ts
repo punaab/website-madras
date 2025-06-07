@@ -1,30 +1,25 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { Photo } from '@prisma/client';
 
 // GET /api/photos
 export async function GET() {
   try {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const photos = await prisma.photo.findMany({
       orderBy: { order: 'asc' },
     });
+
     return NextResponse.json(photos);
   } catch (error) {
     console.error('Error fetching photos:', error);
-    // Log the full error details
-    if (error instanceof Error) {
-      console.error('Error details:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      });
-    }
     return NextResponse.json(
-      { 
-        error: 'Failed to fetch photos',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
+      { error: 'Internal Server Error' },
       { status: 500 }
     );
   }
@@ -33,55 +28,27 @@ export async function GET() {
 // POST /api/photos
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user?.email! },
-    });
-
-    if (!user || user.role !== 'ADMIN') {
-      return NextResponse.json(
-        { error: 'Forbidden' },
-        { status: 403 }
-      );
-    }
-
-    const data = await request.json();
-    const { url, alt } = data;
-
-    if (!url) {
-      return NextResponse.json(
-        { error: 'URL is required' },
-        { status: 400 }
-      );
-    }
-
-    // Get the highest order value
-    const lastPhoto = await prisma.photo.findFirst({
-      orderBy: { order: 'desc' },
-    });
-
-    const newOrder = lastPhoto ? lastPhoto.order + 1 : 0;
+    const { url, title, order } = await request.json();
+    const photoData: Omit<Photo, 'id' | 'createdAt' | 'updatedAt'> = {
+      url,
+      title: title || '',
+      order: order || 0,
+    };
 
     const photo = await prisma.photo.create({
-      data: {
-        url,
-        alt,
-        order: newOrder,
-      },
+      data: photoData,
     });
 
     return NextResponse.json(photo);
   } catch (error) {
     console.error('Error creating photo:', error);
     return NextResponse.json(
-      { error: 'Failed to create photo' },
+      { error: 'Internal Server Error' },
       { status: 500 }
     );
   }
