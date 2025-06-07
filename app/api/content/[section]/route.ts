@@ -34,15 +34,23 @@ export async function PUT(
       });
     }
 
-    const updatedContent = await prisma.content.update({
+    const updatedContent = await prisma.content.upsert({
       where: { section },
-      data: {
+      update: {
         content: data.content,
         title: data.title,
         ...(typeof data.order === 'number' && { order: data.order }),
         ...(typeof data.order === 'string' && !isNaN(parseInt(data.order, 10)) && { order: parseInt(data.order, 10) }),
-        userId: session.user.id,
+        user: { connect: { id: session.user.id } }
       },
+      create: {
+        section: section,
+        content: data.content,
+        title: data.title || '',
+        order: typeof data.order === 'number' ? data.order : 
+               typeof data.order === 'string' && !isNaN(parseInt(data.order, 10)) ? parseInt(data.order, 10) : 0,
+        user: { connect: { id: session.user.id } }
+      }
     });
 
     return new NextResponse(JSON.stringify(updatedContent), {
@@ -64,7 +72,6 @@ export async function PUT(
   }
 }
 
-// DELETE handler remains unchanged
 export async function DELETE(
   request: Request,
   { params }: { params: { section: string } }

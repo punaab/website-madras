@@ -44,9 +44,6 @@ export async function POST(request: Request) {
   try {
     const data = await request.json()
     
-    // Generate a unique section identifier
-    const section = `section_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    
     // Get the highest current order
     const highestOrder = await prisma.content.findFirst({
       orderBy: {
@@ -59,9 +56,9 @@ export async function POST(request: Request) {
 
     const content = await prisma.content.create({
       data: {
-        section,
         title: data.title,
         content: data.content,
+        section: data.section || 'general',
         userId: session.user.id,
         order: (highestOrder?.order ?? -1) + 1 // Set order to be one more than the highest
       },
@@ -108,17 +105,18 @@ export async function PUT(request: Request) {
     const updatedContents = await prisma.$transaction(
       contents.map(content => 
         prisma.content.upsert({
-          where: { section: content.section },
+          where: { id: content.id },
           update: {
             title: content.title,
             content: content.content,
+            section: content.section,
             user: { connect: { id: session.user.id } },
             order: content.order
           },
           create: {
-            section: content.section,
             title: content.title,
             content: content.content,
+            section: content.section || 'general',
             user: { connect: { id: session.user.id } },
             order: content.order
           }
