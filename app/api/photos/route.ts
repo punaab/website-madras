@@ -53,11 +53,11 @@ export async function POST(request: Request) {
     }
 
     const data = await request.json();
-    const { url, title } = data;
+    const { url, alt } = data;
 
-    if (!url || !title) {
+    if (!url) {
       return NextResponse.json(
-        { error: 'URL and title are required' },
+        { error: 'URL is required' },
         { status: 400 }
       );
     }
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
     const photo = await prisma.photo.create({
       data: {
         url,
-        title,
+        alt,
         order: newOrder,
       },
     });
