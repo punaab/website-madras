@@ -17,7 +17,18 @@ export async function GET() {
     })
   } catch (error) {
     console.error('Error fetching content:', error)
-    return new NextResponse(JSON.stringify({ error: 'Internal Server Error' }), {
+    // Log the full error details
+    if (error instanceof Error) {
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      })
+    }
+    return new NextResponse(JSON.stringify({ 
+      error: 'Internal Server Error',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     })

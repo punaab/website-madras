@@ -12,8 +12,19 @@ export async function GET() {
     return NextResponse.json(photos);
   } catch (error) {
     console.error('Error fetching photos:', error);
+    // Log the full error details
+    if (error instanceof Error) {
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+    }
     return NextResponse.json(
-      { error: 'Failed to fetch photos' },
+      { 
+        error: 'Failed to fetch photos',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }
