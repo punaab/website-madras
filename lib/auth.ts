@@ -18,7 +18,10 @@ export const authOptions = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
+        console.log('Attempting to authorize with credentials:', { email: credentials?.email })
+        
         if (!credentials?.email || !credentials?.password) {
+          console.log('Missing credentials')
           return null
         }
 
@@ -26,16 +29,27 @@ export const authOptions = {
           where: { email: credentials.email }
         })
 
+        console.log('Found user:', { 
+          id: user?.id, 
+          email: user?.email, 
+          hasPassword: !!user?.password,
+          role: user?.role 
+        })
+
         if (!user?.password) {
+          console.log('User has no password set')
           return null
         }
 
         const isValid = await bcryptjs.compare(credentials.password, user.password)
+        console.log('Password validation result:', isValid)
 
         if (!isValid) {
+          console.log('Invalid password')
           return null
         }
 
+        console.log('Authorization successful')
         return {
           id: user.id,
           email: user.email,
@@ -58,6 +72,7 @@ export const authOptions = {
   ],
   callbacks: {
     async jwt({ token, user }: { token: JWT; user: any }) {
+      console.log('JWT callback:', { token, user })
       if (user) {
         const dbUser = await prisma.user.findUnique({
           where: { email: user.email! },
@@ -70,6 +85,7 @@ export const authOptions = {
       return token
     },
     async session({ session, token }: { session: any; token: JWT }) {
+      console.log('Session callback:', { session, token })
       if (session?.user) {
         session.user.role = token.role as Role
         session.user.id = token.id as string
@@ -77,6 +93,7 @@ export const authOptions = {
       return session
     }
   },
+  debug: true,
   pages: {
     signIn: '/admin/login',
     error: '/admin/login',
