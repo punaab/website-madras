@@ -5,11 +5,6 @@ import prisma from '@/lib/prisma'
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
     const content = await prisma.content.findMany({
       orderBy: { order: 'asc' },
     })
