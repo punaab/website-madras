@@ -1,24 +1,24 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 
 export async function GET() {
   try {
-    const session = await auth()
-    if (!session?.user) {
+    const session = await getServerSession(authOptions)
+    if (!session?.user || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email! },
-    })
-
-    if (!user || user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
-
     const content = await prisma.content.findMany({
-      orderBy: { order: 'asc' },
+      include: {
+        user: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+      },
     })
 
     return NextResponse.json(content)
@@ -33,26 +33,22 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const session = await auth()
-    if (!session?.user) {
+    const session = await getServerSession(authOptions)
+    if (!session?.user || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email! },
-    })
-
-    if (!user || user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const data = await request.json()
     const content = await prisma.content.create({
       data: {
         ...data,
+        userId: session.user.id,
+      },
+      include: {
         user: {
-          connect: {
-            id: user.id,
+          select: {
+            name: true,
+            email: true,
           },
         },
       },
@@ -70,7 +66,7 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const session = await auth()
+    const session = await getServerSession(authOptions)
     console.log('Session:', session) // Debug log
 
     if (!session?.user) {

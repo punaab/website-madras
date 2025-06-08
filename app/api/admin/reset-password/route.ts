@@ -1,60 +1,41 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
-    const session = auth()
-    
-    // Check if user is authenticated and is an admin
+    const session = await getServerSession(authOptions)
     if (!session?.user || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { userId } = await req.json()
-
-    if (!userId) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    const { email } = await request.json()
+    if (!email) {
+      return NextResponse.json(
+        { error: 'Email is required' },
+        { status: 400 }
+      )
     }
 
-    // Get the user's email
     const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { email: true }
+      where: { email },
     })
 
-    if (!user?.email) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      )
     }
 
-    // Delete any existing password reset tokens
-    await prisma.verificationToken.deleteMany({
-      where: { identifier: user.email }
-    })
-
-    // Create a new password reset token
-    const token = crypto.randomUUID()
-    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
-
-    await prisma.verificationToken.create({
-      data: {
-        identifier: user.email,
-        token,
-        expires
-      }
-    })
-
-    // In a real application, you would send an email with the reset link
-    // For now, we'll just return the token
-    return NextResponse.json({ 
-      message: 'Password reset token created',
-      token,
-      expires
-    })
+    // TODO: Implement password reset email logic
+    // For now, just return success
+    return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Password reset error:', error)
+    console.error('Error resetting password:', error)
     return NextResponse.json(
-      { error: 'Failed to create password reset token' },
+      { error: 'Internal Server Error' },
       { status: 500 }
     )
   }

@@ -1,72 +1,64 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+
+export async function GET(
+  request: Request,
+  { params }: { params: { section: string } }
+) {
+  try {
+    const content = await prisma.content.findFirst({
+      where: { section: params.section },
+    });
+
+    if (!content) {
+      return NextResponse.json(
+        { error: 'Content not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(content);
+  } catch (error) {
+    console.error('Error fetching content:', error);
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 }
+    );
+  }
+}
 
 export async function PUT(
   request: Request,
   { params }: { params: { section: string } }
 ) {
   try {
-    const session = await auth();
+    const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return new NextResponse(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    if (session.user.role !== 'ADMIN') {
-      return new NextResponse(JSON.stringify({ error: 'Forbidden' }), {
-        status: 403,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const data = await request.json();
-    const { section } = params;
-
-    // Validate required fields
-    if (typeof data.content !== 'string') {
-      return new NextResponse(JSON.stringify({ error: 'Content is required' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    const updatedContent = await prisma.content.upsert({
-      where: { section },
+    const content = await prisma.content.upsert({
+      where: { section: params.section },
       update: {
-        content: data.content,
-        title: data.title,
-        ...(typeof data.order === 'number' && { order: data.order }),
-        ...(typeof data.order === 'string' && !isNaN(parseInt(data.order, 10)) && { order: parseInt(data.order, 10) }),
-        user: { connect: { id: session.user.id } }
+        ...data,
+        userId: session.user.id,
       },
       create: {
-        section: section,
-        content: data.content,
-        title: data.title || '',
-        order: typeof data.order === 'number' ? data.order : 
-               typeof data.order === 'string' && !isNaN(parseInt(data.order, 10)) ? parseInt(data.order, 10) : 0,
-        user: { connect: { id: session.user.id } }
-      }
+        section: params.section,
+        ...data,
+        userId: session.user.id,
+      },
     });
 
-    return new NextResponse(JSON.stringify(updatedContent), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return NextResponse.json(content);
   } catch (error) {
     console.error('Error updating content:', error);
-    return new NextResponse(
-      JSON.stringify({
-        error: 'Internal Server Error',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      }
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 }
     );
   }
 }
@@ -76,7 +68,7 @@ export async function DELETE(
   { params }: { params: { section: string } }
 ) {
   try {
-    const session = await auth();
+    const session = await getServerSession(authOptions);
     if (!session?.user) {
       return new NextResponse(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,

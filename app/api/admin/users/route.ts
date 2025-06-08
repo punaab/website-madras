@@ -1,21 +1,13 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
-import { Role } from '@prisma/client'
 
 export async function GET() {
   try {
-    const session = await auth()
-    if (!session?.user) {
+    const session = await getServerSession(authOptions)
+    if (!session?.user || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email! },
-    })
-
-    if (!user || user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const users = await prisma.user.findMany({
@@ -25,6 +17,7 @@ export async function GET() {
         email: true,
         role: true,
         isSuperUser: true,
+        emailVerified: true,
       },
     })
 
@@ -40,30 +33,22 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const session = await auth()
-    if (!session?.user) {
+    const session = await getServerSession(authOptions)
+    if (!session?.user || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email! },
-    })
-
-    if (!user || user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
-
     const data = await request.json()
-    const newUser = await prisma.user.create({
+    const user = await prisma.user.create({
       data: {
         email: data.email,
-        name: data.name || '',
-        role: data.role as Role,
+        name: data.name,
+        role: data.role,
         isSuperUser: data.isSuperUser || false,
       },
     })
 
-    return NextResponse.json(newUser)
+    return NextResponse.json(user)
   } catch (error) {
     console.error('Error creating user:', error)
     return NextResponse.json(
