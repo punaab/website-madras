@@ -9,8 +9,11 @@ RUN npm install
 # Copy the rest of the application
 COPY . .
 
-# Make sure the schema file exists
+# Debug: List files to verify schema exists
+RUN echo "Listing prisma directory contents:"
 RUN ls -la prisma/
+RUN echo "Listing prisma/schema.production.prisma contents:"
+RUN cat prisma/schema.production.prisma
 
 # Run database setup
 RUN npm run setup
