@@ -7,12 +7,12 @@
     "build": "prisma generate --schema=./prisma/schema.production.prisma && next build",
     "start": "prisma db push --schema=./prisma/schema.production.prisma --force-reset --accept-data-loss && next start",
     "lint": "next lint",
-    "postinstall": "prisma generate",
+    "postinstall": "prisma generate --schema=./prisma/schema.production.prisma",
     "db:push": "prisma db push",
     "db:push:prod": "prisma db push --schema=./prisma/schema.production.prisma",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
-    "setup": "prisma generate && prisma migrate deploy && prisma db seed"
+    "setup": "prisma generate --schema=./prisma/schema.production.prisma && prisma migrate deploy --schema=./prisma/schema.production.prisma && prisma db seed"
   },
   "prisma": {
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
