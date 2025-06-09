@@ -19,7 +19,7 @@ const nextConfig = {
           },
           {
             key: 'X-Frame-Options',
-            value: 'ALLOW-FROM https://website-madras-production.up.railway.app'
+            value: 'SAMEORIGIN'
           },
           {
             key: 'X-Content-Type-Options',
@@ -31,7 +31,7 @@ const nextConfig = {
           },
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tiny.cloud https://*.tinymce.com; style-src 'self' 'unsafe-inline' https://cdn.tiny.cloud https://*.tinymce.com; img-src 'self' data: https: blob:; font-src 'self' data: https:; connect-src 'self' https://*.tinymce.com https://cdn.tiny.cloud; frame-ancestors 'self' https://website-madras-production.up.railway.app; frame-src 'self' https://website-madras-production.up.railway.app;"
+            value: "default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'; frame-ancestors 'self';"
           }
         ]
       }
@@ -50,10 +50,7 @@ const nextConfig = {
   },
   // Add experimental features
   experimental: {
-    serverActions: {
-      allowedOrigins: ['website-madras-production.up.railway.app'],
-      bodySizeLimit: '2mb'
-    },
+    serverActions: true,
     serverComponentsExternalPackages: ['bcryptjs']
   }
 }
