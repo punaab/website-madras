@@ -50,7 +50,6 @@ const nextConfig = {
   },
   // Add experimental features
   experimental: {
-    serverActions: true,
     serverComponentsExternalPackages: ['bcryptjs']
   }
 }
