@@ -20,13 +20,14 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# Create a startup script
-RUN echo '#!/bin/sh\n\
-echo "Running database setup..."\n\
-npx prisma migrate deploy --schema=prisma/schema.production.prisma\n\
-npx prisma db seed\n\
-echo "Starting application..."\n\
-npm start' > /app/start.sh && chmod +x /app/start.sh
+# Create startup script
+RUN echo '#!/bin/sh' > /app/start.sh && \
+    echo 'echo "Running database setup..."' >> /app/start.sh && \
+    echo 'npx prisma migrate deploy --schema=prisma/schema.production.prisma' >> /app/start.sh && \
+    echo 'npx prisma db seed' >> /app/start.sh && \
+    echo 'echo "Starting application..."' >> /app/start.sh && \
+    echo 'npm start' >> /app/start.sh && \
+    chmod +x /app/start.sh
 
 # Start the application
-CMD ["/app/start.sh"] 
+CMD ["sh", "/app/start.sh"] 
