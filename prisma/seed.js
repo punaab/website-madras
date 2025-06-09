@@ -1,23 +1,35 @@
 const { PrismaClient } = require('@prisma/client')
 const bcrypt = require('bcryptjs')
 
-const prisma = new PrismaClient()
+// Create Prisma client with explicit database URL
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL
+    }
+  }
+})
 
 async function main() {
-  // Create admin user
-  const hashedPassword = await bcrypt.hash('admin123', 10)
-  
-  const admin = await prisma.user.upsert({
-    where: { email: 'admin@madras.com' },
-    update: {},
-    create: {
-      email: 'admin@madras.com',
-      name: 'Admin',
-      password: hashedPassword,
-    },
-  })
+  try {
+    // Create admin user
+    const hashedPassword = await bcrypt.hash('admin123', 10)
+    
+    const admin = await prisma.user.upsert({
+      where: { email: 'admin@madras.com' },
+      update: {},
+      create: {
+        email: 'admin@madras.com',
+        name: 'Admin',
+        password: hashedPassword,
+      },
+    })
 
-  console.log({ admin })
+    console.log('Admin user created:', admin)
+  } catch (error) {
+    console.error('Error creating admin user:', error)
+    throw error
+  }
 }
 
 main()
