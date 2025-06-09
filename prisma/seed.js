@@ -1,11 +1,12 @@
 const { PrismaClient } = require('@prisma/client')
 const bcrypt = require('bcryptjs')
+require('dotenv').config()
 
 // Create Prisma client with explicit database URL
 const prisma = new PrismaClient({
   datasources: {
     db: {
-      url: process.env.DATABASE_URL
+      url: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/madras'
     }
   }
 })
