@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import type { User } from "next-auth";
 
 const handler = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -20,31 +21,39 @@ const handler = NextAuth({
             return null;
           }
 
-          const user = await prisma.user.findUnique({
+          const dbUser = await prisma.user.findUnique({
             where: {
               email: credentials.email
             }
           });
 
-          if (!user) {
+          if (!dbUser) {
             console.log('User not found');
             return null;
           }
 
-          if (!user.password) {
+          if (!dbUser.password) {
             console.log('User has no password');
             return null;
           }
 
           const isCorrectPassword = await bcrypt.compare(
             credentials.password,
-            user.password
+            dbUser.password
           );
 
           if (!isCorrectPassword) {
             console.log('Invalid password');
             return null;
           }
+
+          // Transform database user to NextAuth user
+          const user: User = {
+            id: dbUser.id,
+            email: dbUser.email || '',
+            name: dbUser.name || '',
+            image: dbUser.image || '',
+          };
 
           console.log('Authentication successful');
           return user;
