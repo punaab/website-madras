@@ -27,9 +27,34 @@ export async function POST(request: Request) {
     }
 
     const data = await request.json()
+    
+    // Generate a unique section name if not provided
+    const section = data.section || `section-${Date.now()}`
+    const title = data.title || ''
+
+    // Check if section already exists
+    const existingSection = await prisma.content.findUnique({
+      where: { section },
+    })
+
+    if (existingSection) {
+      return NextResponse.json(
+        { error: 'Section already exists' },
+        { status: 400 }
+      )
+    }
+
+    // Get the highest order value
+    const lastContent = await prisma.content.findFirst({
+      orderBy: { order: 'desc' },
+    })
+
     const content = await prisma.content.create({
       data: {
-        ...data,
+        section,
+        title,
+        content: data.content || '',
+        order: (lastContent?.order || 0) + 1,
         user: {
           connect: {
             id: session.user.id,
@@ -56,10 +81,21 @@ export async function PUT(request: Request) {
     }
 
     const data = await request.json()
+    
+    // Validate required fields
+    if (!data.section) {
+      return NextResponse.json(
+        { error: 'Section is required' },
+        { status: 400 }
+      )
+    }
+
     const content = await prisma.content.update({
       where: { section: data.section },
       data: {
-        ...data,
+        title: data.title || '',
+        content: data.content || '',
+        order: data.order,
         user: {
           connect: {
             id: session.user.id,

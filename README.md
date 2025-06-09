@@ -1,57 +1,79 @@
-# Madras Website
+# Madras Ward Website
 
-A modern website with an admin portal for content management, built with Next.js and deployed on Railway.app.
+A modern, responsive website for the Madras Ward of The Church of Jesus Christ of Latter-day Saints.
 
 ## Features
 
-- Responsive frontend with dynamic content sections
-- Admin portal for content management
-- Authentication using NextAuth.js
-- PostgreSQL database with Prisma ORM
-- Deployed on Railway.app
+- Responsive design for all devices
+- Photo slideshow gallery
+- Admin dashboard for content management
+- User authentication and authorization
+- Content management system
+- Photo upload and management
+- Modern UI with smooth animations
 
-## Prerequisites
+## Tech Stack
 
-- Node.js 18+ installed
-- PostgreSQL database
-- Railway.app account
-- GitHub account
+- Next.js 14
+- TypeScript
+- Tailwind CSS
+- Prisma
+- PostgreSQL
+- NextAuth.js
+- React
 
-## Setup Instructions
+## Getting Started
 
 1. Clone the repository:
-   ```bash
-   git clone https://github.com/punaab/website-madras.git
-   cd website-madras
-   ```
+```bash
+git clone https://github.com/yourusername/madras-ward.git
+cd madras-ward
+```
 
 2. Install dependencies:
-   ```bash
-   npm install
-   ```
+```bash
+npm install
+```
 
 3. Set up environment variables:
-   Create a `.env` file in the root directory with the following variables:
-   ```
-   DATABASE_URL="your_postgresql_connection_string"
-   NEXTAUTH_SECRET="your_nextauth_secret"
-   NEXTAUTH_URL="http://localhost:3000"
-   ```
+Create a `.env` file in the root directory with the following variables:
+```env
+DATABASE_URL="your_database_url"
+NEXTAUTH_SECRET="your_nextauth_secret"
+NEXTAUTH_URL="http://localhost:3000"
+```
 
-4. Initialize the database:
-   ```bash
-   npx prisma migrate dev
-   ```
+4. Set up the database:
+```bash
+npx prisma migrate dev
+npx prisma db seed
+```
 
-5. Create an admin user:
-   ```bash
-   npx prisma db seed
-   ```
+5. Run the development server:
+```bash
+npm run dev
+```
 
-6. Run the development server:
-   ```bash
-   npm run dev
-   ```
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## Admin Access
+
+To access the admin dashboard:
+1. Navigate to `/admin/login`
+2. Use the default admin credentials (created during seeding)
+3. Manage content, photos, and users through the dashboard
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Railway.app Deployment
 
@@ -67,18 +89,6 @@ A modern website with an admin portal for content management, built with Next.js
 ## Admin Portal
 
 Access the admin portal at `/admin` after deployment. Use the credentials created during the database seeding process.
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
-
-## License
-
-This project is licensed under the MIT License.
 
 ## Editor Integration
 

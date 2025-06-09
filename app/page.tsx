@@ -204,7 +204,7 @@ export default function Home() {
               <div key={content.section} className="bg-white shadow rounded-lg p-6">
                 <div 
                   className="prose prose-lg max-w-none [&_*]:font-inherit [&_p]:my-4 [&_h1]:text-4xl [&_h1]:font-bold [&_h1]:mb-4 [&_h2]:text-3xl [&_h2]:font-bold [&_h2]:mb-3 [&_h3]:text-2xl [&_h3]:font-bold [&_h3]:mb-3 [&_h4]:text-xl [&_h4]:font-bold [&_h4]:mb-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-1 [&_a]:text-blue-600 [&_a]:hover:text-blue-800 [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_pre]:bg-gray-100 [&_pre]:p-4 [&_pre]:rounded [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:rounded [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_th]:border-gray-300 [&_th]:p-2 [&_td]:border [&_td]:border-gray-300 [&_td]:p-2 [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded"
-                  dangerouslySetInnerHTML={{ __html: content.content }} 
+                  dangerouslySetInnerHTML={{ __html: content.content }}
                 />
               </div>
             ))
@@ -212,10 +212,24 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Photo Slideshow */}
+      {/* Photo Slideshow Section */}
       {photos.length > 0 && (
-        <div className="mb-8">
-          <PhotoSlideshow photos={photos} />
+        <div className="bg-gradient-to-b from-gray-50 to-white py-16 mt-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">
+                Our Ward Family
+              </h2>
+              <p className="mt-4 text-lg text-gray-600">
+                A collection of special moments and memories
+              </p>
+            </div>
+            <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-white p-4 sm:p-6">
+                <PhotoSlideshow photos={photos} />
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

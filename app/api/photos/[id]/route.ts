@@ -41,20 +41,33 @@ export async function DELETE(
       );
     }
 
-    // Delete the file from public/uploads
-    const filePath = join(process.cwd(), 'public', 'uploads', photo.url);
-    await unlink(filePath);
+    try {
+      // Delete the file from public/uploads
+      const filePath = join(process.cwd(), 'public', 'uploads', photo.url);
+      try {
+        await unlink(filePath);
+      } catch (fileError) {
+        console.warn('Could not delete file from filesystem:', fileError);
+        // Continue with database deletion even if file deletion fails
+      }
 
-    // Delete the photo record from the database
-    await prisma.photo.delete({
-      where: { id: params.id },
-    });
+      // Delete the photo record from the database
+      await prisma.photo.delete({
+        where: { id: params.id },
+      });
 
-    return NextResponse.json({ success: true });
+      return NextResponse.json({ success: true });
+    } catch (error) {
+      console.error('Error in photo deletion process:', error);
+      return NextResponse.json(
+        { error: 'Failed to delete photo', details: error instanceof Error ? error.message : 'Unknown error' },
+        { status: 500 }
+      );
+    }
   } catch (error) {
-    console.error('Error deleting photo:', error);
+    console.error('Error in photo deletion endpoint:', error);
     return NextResponse.json(
-      { error: 'Internal Server Error' },
+      { error: 'Internal Server Error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

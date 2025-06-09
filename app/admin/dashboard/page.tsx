@@ -352,14 +352,14 @@ export default function AdminDashboard() {
       'fontfamily fontsize | bold italic forecolor | alignleft aligncenter ' +
       'alignright alignjustify | bullist numlist outdent indent | ' +
       'removeformat | help',
-    content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
+    content_style: 'body { font-family: "Times New Roman", Times, serif; font-size:14px }',
     font_family_formats: 'Times New Roman=times new roman,times; Arial=arial,helvetica,sans-serif; Helvetica=helvetica,arial,sans-serif; Georgia=georgia,times new roman,times; Verdana=verdana,geneva; Courier New=courier new,courier,monospace',
     font_size_formats: '8pt 10pt 12pt 14pt 16pt 18pt 20pt 24pt 28pt 32pt 36pt',
     skin: false,
     content_css: false,
     setup: (editor: any) => {
       editor.on('init', () => {
-        editor.getBody().style.fontFamily = 'Helvetica, Arial, sans-serif';
+        editor.getBody().style.fontFamily = '"Times New Roman", Times, serif';
         editor.getBody().style.fontSize = '14px';
 
         // Handle text selection based on device type
@@ -434,38 +434,60 @@ export default function AdminDashboard() {
     readonly: isMobile
   };
 
-  const handlePhotoUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newPhotoFile || !newPhotoTitle) return;
-
-    setIsUploading(true);
+  const fetchPhotos = async () => {
     try {
-      // Create a FormData object
-      const formData = new FormData();
-      formData.append('file', newPhotoFile);
-      formData.append('title', newPhotoTitle);
+      const response = await fetch('/api/photos');
+      if (!response.ok) {
+        throw new Error('Failed to fetch photos');
+      }
+      const data = await response.json();
+      setPhotos(data);
+    } catch (error) {
+      console.error('Error fetching photos:', error);
+    }
+  };
 
-      // Upload the file
-      const uploadResponse = await fetch('/api/upload', {
+  const handlePhotoUpload = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    try {
+      const fileInput = document.getElementById('photo-file') as HTMLInputElement;
+      const file = fileInput.files?.[0];
+      if (!file) {
+        console.error('No file selected');
+        return;
+      }
+
+      console.log('Uploading file:', file.name); // Debug log
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
       });
 
-      if (!uploadResponse.ok) {
-        throw new Error('Failed to upload photo');
+      console.log('Upload response status:', response.status); // Debug log
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Upload error response:', errorData); // Debug log
+        throw new Error(errorData.error || 'Failed to upload photo');
       }
 
-      const { url } = await uploadResponse.json();
+      const data = await response.json();
+      console.log('Upload successful:', data); // Debug log
 
-      // Create the photo record
+      // Create a new photo record
       const photoResponse = await fetch('/api/photos', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          url,
-          title: newPhotoTitle,
+          url: data.url,
+          title: file.name,
+          description: '',
         }),
       });
 
@@ -473,16 +495,11 @@ export default function AdminDashboard() {
         throw new Error('Failed to create photo record');
       }
 
-      const newPhoto = await photoResponse.json();
-      setPhotos([...photos, newPhoto]);
-      setNewPhotoTitle('');
-      setNewPhotoFile(null);
-      setMessage({ type: 'success', text: 'Photo uploaded successfully' });
+      // Refresh the photos list
+      fetchPhotos();
     } catch (error) {
       console.error('Error uploading photo:', error);
-      setMessage({ type: 'error', text: 'Failed to upload photo' });
-    } finally {
-      setIsUploading(false);
+      // You might want to show this error to the user in the UI
     }
   };
 
@@ -708,53 +725,29 @@ export default function AdminDashboard() {
             <div className="mt-2 max-w-xl text-sm text-gray-500">
               <p>Upload and manage photos for the slideshow.</p>
             </div>
-            <form onSubmit={handlePhotoUpload} className="mt-5">
-              <div className="space-y-4">
-                <div>
-                  <label
-                    htmlFor="photo-title"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Photo Title
-                  </label>
-                  <input
-                    type="text"
-                    id="photo-title"
-                    value={newPhotoTitle}
-                    onChange={(e) => setNewPhotoTitle(e.target.value)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                    required
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="photo-file"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Photo File
-                  </label>
-                  <input
-                    type="file"
-                    id="photo-file"
-                    accept="image/*"
-                    onChange={(e) => setNewPhotoFile(e.target.files?.[0] || null)}
-                    className="mt-1 block w-full text-sm text-gray-500
-                      file:mr-4 file:py-2 file:px-4
-                      file:rounded-md file:border-0
-                      file:text-sm file:font-semibold
-                      file:bg-blue-50 file:text-blue-700
-                      hover:file:bg-blue-100"
-                    required
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={isUploading}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-                >
-                  {isUploading ? 'Uploading...' : 'Upload Photo'}
-                </button>
+            <form onSubmit={handlePhotoUpload} className="space-y-4">
+              <div>
+                <label htmlFor="photo-file" className="block text-sm font-medium text-gray-700">
+                  Upload Photo
+                </label>
+                <input
+                  type="file"
+                  id="photo-file"
+                  accept="image/*"
+                  className="mt-1 block w-full text-sm text-gray-500
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-md file:border-0
+                    file:text-sm file:font-semibold
+                    file:bg-blue-50 file:text-blue-700
+                    hover:file:bg-blue-100"
+                />
               </div>
+              <button
+                type="submit"
+                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Upload
+              </button>
             </form>
 
             {/* Photo Grid */}

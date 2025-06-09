@@ -1,15 +1,15 @@
 import NextAuth from 'next-auth'
 import EmailProvider from 'next-auth/providers/email'
 import CredentialsProvider from 'next-auth/providers/credentials'
-import { PrismaClient, Role } from '@prisma/client'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import { JWT } from 'next-auth/jwt'
 import bcryptjs from 'bcryptjs'
+import prisma from './prisma'
 
-const prisma = new PrismaClient()
+type Role = 'USER' | 'ADMIN'
 
 export const authOptions = {
-  adapter: PrismaAdapter(prisma),
+  adapter: PrismaAdapter(prisma) as any,
   providers: [
     CredentialsProvider({
       name: 'Credentials',

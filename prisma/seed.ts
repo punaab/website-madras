@@ -1,48 +1,25 @@
-import { PrismaClient, Role } from '@prisma/client'
-import bcrypt from 'bcryptjs'
+import { PrismaClient } from '@prisma/client'
+import { hash } from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
 async function main() {
-  // Create admin user with password
-  const adminPassword = await bcrypt.hash('admin123', 10)
-  const admin = await prisma.user.upsert({
-    where: { email: 'admin@madras.com' },
+  // Create admin user
+  const hashedPassword = await hash('admin123', 12)
+  await prisma.user.upsert({
+    where: { email: 'music.seanlayton@gmail.com' },
     update: {
-      password: adminPassword,
-      role: Role.ADMIN,
-      isSuperUser: true,
+      emailVerified: new Date(),
     },
     create: {
-      email: 'admin@madras.com',
-      name: 'Admin User',
-      password: adminPassword,
-      role: Role.ADMIN,
+      email: 'music.seanlayton@gmail.com',
+      name: 'Sean Layton',
+      password: hashedPassword,
+      role: 'ADMIN',
       isSuperUser: true,
+      emailVerified: new Date(),
     },
   })
-
-  console.log('Admin user created:', admin.email)
-
-  // Create initial content sections
-  const sections = [
-    { section: 'hero', title: 'Hero Section', content: 'Welcome to Madras' },
-    { section: 'about', title: 'About Us', content: 'About Madras' },
-    { section: 'contact', title: 'Contact Us', content: 'Get in touch with us' },
-  ]
-
-  for (const section of sections) {
-    await prisma.content.upsert({
-      where: { section: section.section },
-      update: section,
-      create: {
-        ...section,
-        userId: admin.id,
-      },
-    })
-  }
-
-  console.log('Initial content sections created')
 }
 
 main()

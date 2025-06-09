@@ -28,12 +28,19 @@ export default function UserManagement() {
 
   const fetchUsers = async () => {
     try {
+      setIsLoading(true)
+      setError('')
       const response = await fetch('/api/admin/users')
-      if (!response.ok) throw new Error('Failed to fetch users')
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to fetch users')
+      }
       const data = await response.json()
+      console.log('Fetched users:', data)
       setUsers(data)
     } catch (err) {
-      setError('Failed to load users')
+      console.error('Error fetching users:', err)
+      setError(err instanceof Error ? err.message : 'Failed to load users')
     } finally {
       setIsLoading(false)
     }

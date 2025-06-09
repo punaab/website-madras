@@ -30,7 +30,7 @@ const Footer = () => {
 
   return (
     <footer 
-      className={`fixed bottom-0 left-0 right-0 backdrop-blur-sm border-t border-gray-100 py-4 transition-all duration-700 ease-in-out z-50 mt-8 ${
+      className={`fixed bottom-0 left-0 right-0 backdrop-blur-sm border-t border-gray-100 py-4 transition-all duration-700 ease-in-out z-50 ${
         isVisible 
           ? 'translate-y-0 opacity-100' 
           : 'translate-y-full opacity-0'
@@ -63,10 +63,10 @@ const Footer = () => {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-center space-x-2 sm:space-x-6">
-          <Link 
-            href="https://www.churchofjesuschrist.org/?lang=eng" 
-            target="_blank" 
-            rel="noopener noreferrer"
+            <Link 
+              href="https://www.churchofjesuschrist.org/?lang=eng" 
+              target="_blank" 
+              rel="noopener noreferrer"
             className="flex items-center px-3 py-2 rounded-lg transition-all duration-500 group shadow-[0_2px_8px_-2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.15)]"
             style={{
               backgroundImage: `
@@ -80,21 +80,21 @@ const Footer = () => {
               `,
               backdropFilter: 'blur(4px)'
             }}
-          >
+            >
             <span className="hidden sm:inline text-gray-700 font-medium group-hover:text-blue-600 transition-colors duration-500">Official Website</span>
-            <Image 
-              src="/assets/images/web-icon.svg" 
-              alt="Church Website" 
+              <Image 
+                src="/assets/images/web-icon.svg" 
+                alt="Church Website" 
               width={20} 
               height={20} 
               className="sm:hidden group-hover:scale-110 transition-transform duration-500"
-            />
-          </Link>
+              />
+            </Link>
           
-          <Link 
-            href="https://www.churchofjesuschrist.org/study/scriptures?lang=eng" 
-            target="_blank" 
-            rel="noopener noreferrer"
+            <Link 
+              href="https://www.churchofjesuschrist.org/study/scriptures?lang=eng" 
+              target="_blank" 
+              rel="noopener noreferrer"
             className="flex items-center px-3 py-2 rounded-lg transition-all duration-500 group shadow-[0_2px_8px_-2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.15)]"
             style={{
               backgroundImage: `
@@ -108,21 +108,21 @@ const Footer = () => {
               `,
               backdropFilter: 'blur(4px)'
             }}
-          >
+            >
             <span className="hidden sm:inline text-gray-700 font-medium group-hover:text-blue-600 transition-colors duration-500">Scriptures</span>
-            <Image 
-              src="/assets/images/scripture-icon.svg" 
-              alt="Scriptures" 
+              <Image 
+                src="/assets/images/scripture-icon.svg" 
+                alt="Scriptures" 
               width={20} 
               height={20} 
               className="sm:hidden group-hover:scale-110 transition-transform duration-500"
-            />
-          </Link>
+              />
+            </Link>
           
-          <Link 
+            <Link 
             href="https://www.churchofjesuschrist.org/music/library/hymns?lang=eng" 
-            target="_blank" 
-            rel="noopener noreferrer"
+              target="_blank" 
+              rel="noopener noreferrer"
             className="flex items-center px-3 py-2 rounded-lg transition-all duration-500 group shadow-[0_2px_8px_-2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.15)]"
             style={{
               backgroundImage: `
@@ -136,18 +136,18 @@ const Footer = () => {
               `,
               backdropFilter: 'blur(4px)'
             }}
-          >
+            >
             <span className="hidden sm:inline text-gray-700 font-medium group-hover:text-blue-600 transition-colors duration-500">Hymns</span>
-            <Image 
-              src="/assets/images/music-icon.svg" 
+              <Image 
+                src="/assets/images/music-icon.svg" 
               alt="Hymns" 
               width={20} 
               height={20} 
               className="sm:hidden group-hover:scale-110 transition-transform duration-500"
-            />
-          </Link>
+              />
+            </Link>
           
-          <Link 
+              <Link 
             href="/admin/login" 
             className="flex items-center px-3 py-2 rounded-lg transition-all duration-500 group shadow-[0_2px_8px_-2px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.15)]"
             style={{
@@ -162,16 +162,16 @@ const Footer = () => {
               `,
               backdropFilter: 'blur(4px)'
             }}
-          >
+              >
             <span className="hidden sm:inline text-gray-700 font-medium group-hover:text-blue-600 transition-colors duration-500">Admin Login</span>
-            <Image 
-              src="/assets/images/admin-icon.svg" 
+                <Image 
+                  src="/assets/images/admin-icon.svg" 
               alt="Admin Login" 
               width={20} 
               height={20} 
               className="sm:hidden group-hover:scale-110 transition-transform duration-500"
-            />
-          </Link>
+                />
+              </Link>
         </div>
       </div>
     </footer>
