@@ -5,6 +5,7 @@ import { PrismaAdapter } from '@auth/prisma-adapter'
 import { JWT } from 'next-auth/jwt'
 import bcryptjs from 'bcryptjs'
 import prisma from './prisma'
+import type { User } from 'next-auth'
 
 type Role = 'USER' | 'ADMIN'
 
@@ -17,7 +18,7 @@ export const authOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" }
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         console.log('Attempting to authorize with credentials:', { email: credentials?.email })
         
         if (!credentials?.email || !credentials?.password) {
@@ -36,8 +37,8 @@ export const authOptions = {
           role: user?.role 
         })
 
-        if (!user?.password) {
-          console.log('User has no password set')
+        if (!user?.password || !user.email) {
+          console.log('User has no password set or no email')
           return null
         }
 
@@ -50,12 +51,14 @@ export const authOptions = {
         }
 
         console.log('Authorization successful')
-        return {
+        const nextAuthUser: User = {
           id: user.id,
           email: user.email,
-          name: user.name,
+          name: user.name || undefined,
+          image: undefined,
           role: user.role
         }
+        return nextAuthUser
       }
     }),
     EmailProvider({
