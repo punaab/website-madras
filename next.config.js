@@ -47,6 +47,12 @@ const nextConfig = {
       }
     }
     return config
+  },
+  // Add experimental features
+  experimental: {
+    serverActions: {
+      allowedOrigins: ['website-madras-production.up.railway.app'],
+    },
   }
 }
 
