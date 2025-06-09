@@ -17,17 +17,16 @@ RUN npx prisma generate --schema=prisma/schema.production.prisma
 # Copy the rest of the application
 COPY . .
 
-# Debug: List files to verify schema exists
-RUN echo "Listing prisma directory contents:"
-RUN ls -la prisma/
-RUN echo "Listing prisma/schema.production.prisma contents:"
-RUN cat prisma/schema.production.prisma
-
-# Run database setup
-RUN npm run setup
-
 # Build the application
 RUN npm run build
 
+# Create a startup script
+RUN echo '#!/bin/sh\n\
+echo "Running database setup..."\n\
+npx prisma migrate deploy --schema=prisma/schema.production.prisma\n\
+npx prisma db seed\n\
+echo "Starting application..."\n\
+npm start' > /app/start.sh && chmod +x /app/start.sh
+
 # Start the application
-CMD ["npm", "start"] 
+CMD ["/app/start.sh"] 
