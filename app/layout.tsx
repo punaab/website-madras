@@ -5,19 +5,19 @@ import { AuthProvider } from './providers/AuthProvider'
 
 const inter = Inter({ subsets: ['latin'] })
 
+export const metadata: Metadata = {
+  title: 'Madras Website',
+  description: 'Official website for Madras',
+  icons: {
+    icon: '/favicon.ico',
+  },
+}
+
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-}
-
-export const metadata: Metadata = {
-  title: 'Madras Ward',
-  description: 'Welcome to Madras Ward',
-  icons: {
-    icon: '/assets/images/favicon.ico',
-  },
 }
 
 export default function RootLayout({

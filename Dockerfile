@@ -24,7 +24,7 @@ RUN npm run build
 RUN echo '#!/bin/sh' > /app/start.sh && \
     echo 'echo "Running database setup..."' >> /app/start.sh && \
     echo 'npx prisma migrate deploy --schema=prisma/schema.production.prisma' >> /app/start.sh && \
-    echo 'npx prisma db seed' >> /app/start.sh && \
+    echo 'npx prisma db seed --schema=prisma/schema.production.prisma' >> /app/start.sh && \
     echo 'echo "Starting application..."' >> /app/start.sh && \
     echo 'npm start' >> /app/start.sh && \
     chmod +x /app/start.sh
