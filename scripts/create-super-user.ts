@@ -1,13 +1,13 @@
 import { PrismaClient } from '@prisma/client'
+import { hash } from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
 async function main() {
-  const email = process.argv[2]
-  if (!email) {
-    console.error('Please provide an email address')
-    process.exit(1)
-  }
+  const email = 'sean@madras.co.nz'
+  const password = 'Madras2024!' // Default password for super user
+
+  const hashedPassword = await hash(password, 12)
 
   const user = await prisma.user.upsert({
     where: { email },
@@ -16,10 +16,11 @@ async function main() {
       email,
       name: 'Sean Layton',
       role: 'ADMIN',
+      password: hashedPassword
     },
   })
 
-  console.log('Created admin user:', user)
+  console.log({ user })
 }
 
 main()
