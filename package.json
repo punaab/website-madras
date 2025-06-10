@@ -21,6 +21,7 @@
     "@heroicons/react": "^2.1.1",
     "@prisma/client": "^5.7.1",
     "@tailwindcss/forms": "^0.5.7",
+    "@tiptap/extension-color": "^2.2.4",
     "@tiptap/extension-highlight": "^2.2.4",
     "@tiptap/extension-image": "^2.2.4",
     "@tiptap/extension-link": "^2.2.4",
@@ -34,14 +35,16 @@
     "@tiptap/starter-kit": "^2.2.4",
     "@tinymce/tinymce-react": "^4.3.2",
     "bcryptjs": "^2.4.3",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.0",
     "dotenv": "^16.5.0",
     "lucide-react": "^0.344.0",
     "next": "14.0.4",
     "next-auth": "^4.24.5",
     "react": "^18",
     "react-dom": "^18",
-    "ts-node": "^10.9.2",
-    "typescript": "^5"
+    "tailwind-merge": "^2.2.1",
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
