@@ -1,11 +1,13 @@
-import NextAuth from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
+import { NextAuthOptions } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import type { User } from "next-auth";
+import NextAuth from "next-auth/next";
+import { JWT } from "next-auth/jwt";
+import { User } from "@prisma/client";
 
-const handler = NextAuth({
+export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
@@ -15,83 +17,74 @@ const handler = NextAuth({
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        try {
-          if (!credentials?.email || !credentials?.password) {
-            console.log('Missing credentials');
-            return null;
-          }
-
-          const dbUser = await prisma.user.findUnique({
-            where: {
-              email: credentials.email
-            }
-          });
-
-          if (!dbUser) {
-            console.log('User not found');
-            return null;
-          }
-
-          if (!dbUser.password) {
-            console.log('User has no password');
-            return null;
-          }
-
-          const isCorrectPassword = await bcrypt.compare(
-            credentials.password,
-            dbUser.password
-          );
-
-          if (!isCorrectPassword) {
-            console.log('Invalid password');
-            return null;
-          }
-
-          // Transform database user to NextAuth user
-          const user: User = {
-            id: dbUser.id,
-            email: dbUser.email || '',
-            name: dbUser.name || '',
-            image: dbUser.image || '',
-          };
-
-          console.log('Authentication successful');
-          return user;
-        } catch (error) {
-          console.error('Auth error:', error);
-          return null;
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error('Invalid credentials');
         }
+
+        const dbUser = await prisma.user.findUnique({
+          where: {
+            email: credentials.email
+          }
+        });
+
+        if (!dbUser || !dbUser?.password) {
+          throw new Error('Invalid credentials');
+        }
+
+        const isPasswordValid = await bcrypt.compare(
+          credentials.password,
+          dbUser.password
+        );
+
+        if (!isPasswordValid) {
+          throw new Error('Invalid credentials');
+        }
+
+        return {
+          id: dbUser.id,
+          email: dbUser.email || '',
+          name: dbUser.name || '',
+          image: dbUser.image || null,
+          role: dbUser.role,
+          isSuperUser: dbUser.isSuperUser
+        };
       }
     })
   ],
   session: {
-    strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    strategy: "jwt"
   },
   secret: process.env.NEXTAUTH_SECRET,
-  debug: true,
+  debug: process.env.NODE_ENV === "development",
   pages: {
-    signIn: '/admin/login',
-    error: '/admin/login',
+    signIn: '/login',
   },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
-        token.email = user.email;
-        token.name = user.name;
+        return {
+          ...token,
+          id: user.id,
+          role: (user as User).role,
+          isSuperUser: (user as User).isSuperUser
+        };
       }
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id as string;
-        session.user.email = token.email as string;
-        session.user.name = token.name as string;
-      }
-      return session;
-    },
-  },
-});
+      return {
+        ...session,
+        user: {
+          ...session.user,
+          id: token.id,
+          role: token.role,
+          isSuperUser: token.isSuperUser
+        }
+      };
+    }
+  }
+};
+
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST }; 
