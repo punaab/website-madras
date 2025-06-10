@@ -1,5 +1,8 @@
 FROM node:18-alpine
 
+# Install OpenSSL and other required dependencies
+RUN apk add --no-cache openssl openssl-dev libc6-compat
+
 WORKDIR /app
 
 # Copy package files first for better caching
@@ -37,4 +40,4 @@ RUN echo '#!/bin/sh' > /app/start.sh && \
     chmod +x /app/start.sh
 
 # Start the application
-CMD ["sh", "/app/start.sh"] 
+CMD ["/app/start.sh"] 
