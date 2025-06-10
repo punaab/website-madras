@@ -35,6 +35,7 @@
     "@tinymce/tinymce-react": "^4.3.2",
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.5.0",
+    "lucide-react": "^0.344.0",
     "next": "14.0.4",
     "next-auth": "^4.24.5",
     "react": "^18",
