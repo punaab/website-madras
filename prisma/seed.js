@@ -1,41 +1,29 @@
 const { PrismaClient } = require('@prisma/client')
 const bcrypt = require('bcryptjs')
-require('dotenv').config()
 
-// Create Prisma client with explicit database URL
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/madras'
-    }
-  }
-})
+const prisma = new PrismaClient()
 
 async function main() {
-  try {
-    // Create admin user
-    const hashedPassword = await bcrypt.hash('admin123', 10)
-    
-    const admin = await prisma.user.upsert({
-      where: { email: 'admin@madras.com' },
-      update: {},
-      create: {
-        email: 'admin@madras.com',
-        name: 'Admin',
-        password: hashedPassword,
-      },
-    })
+  // Create admin user
+  const hashedPassword = await bcrypt.hash('Madras2024!', 12)
 
-    console.log('Admin user created:', admin)
-  } catch (error) {
-    console.error('Error creating admin user:', error)
-    throw error
-  }
+  const admin = await prisma.user.upsert({
+    where: { email: 'sean@madras.co.nz' },
+    update: {},
+    create: {
+      email: 'sean@madras.co.nz',
+      name: 'Sean Layton',
+      role: 'ADMIN',
+      password: hashedPassword
+    },
+  })
+
+  console.log('Created admin user:', admin)
 }
 
 main()
   .catch((e) => {
-    console.error(e)
+    console.error('Error creating admin user:', e)
     process.exit(1)
   })
   .finally(async () => {
