@@ -1,13 +1,20 @@
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 
-// Override the DATABASE_URL with DATABASE_PUBLIC_URL
+// Ensure we're using DATABASE_PUBLIC_URL
+if (!process.env.DATABASE_PUBLIC_URL) {
+  console.error('DATABASE_PUBLIC_URL environment variable is not set');
+  process.exit(1);
+}
+
+// Override DATABASE_URL with DATABASE_PUBLIC_URL
 process.env.DATABASE_URL = process.env.DATABASE_PUBLIC_URL;
 
 const prisma = new PrismaClient();
 
 async function main() {
   try {
+    console.log('Checking for existing admin user...');
     // Check if admin user already exists
     const existingAdmin = await prisma.user.findUnique({
       where: {
