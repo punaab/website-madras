@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "prisma generate --schema=prisma/schema.development.prisma && next dev",
-    "build": "prisma generate --schema=prisma/schema.production.prisma && next build && npx ts-node scripts/create-admin.ts",
+    "build": "prisma generate --schema=prisma/schema.production.prisma && next build",
+    "postbuild": "npx ts-node scripts/create-admin.ts",
     "start": "next start",
     "lint": "next lint",
     "postinstall": "prisma generate",
