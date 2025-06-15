@@ -15,37 +15,50 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error('Invalid credentials');
-        }
-
-        const dbUser = await prisma.user.findUnique({
-          where: {
-            email: credentials.email
+        try {
+          if (!credentials?.email || !credentials?.password) {
+            console.error('Missing credentials');
+            throw new Error('Invalid credentials');
           }
-        });
 
-        if (!dbUser || !dbUser?.password) {
-          throw new Error('Invalid credentials');
+          const dbUser = await prisma.user.findUnique({
+            where: {
+              email: credentials.email
+            }
+          });
+
+          if (!dbUser) {
+            console.error('User not found:', credentials.email);
+            throw new Error('Invalid credentials');
+          }
+
+          if (!dbUser.password) {
+            console.error('User has no password set:', credentials.email);
+            throw new Error('Invalid credentials');
+          }
+
+          const isPasswordValid = await bcrypt.compare(
+            credentials.password,
+            dbUser.password
+          );
+
+          if (!isPasswordValid) {
+            console.error('Invalid password for user:', credentials.email);
+            throw new Error('Invalid credentials');
+          }
+
+          console.log('Authentication successful for user:', credentials.email);
+          return {
+            id: dbUser.id,
+            email: dbUser.email || '',
+            name: dbUser.name || '',
+            role: dbUser.role,
+            isSuperUser: dbUser.isSuperUser
+          };
+        } catch (error) {
+          console.error('Authentication error:', error);
+          throw error;
         }
-
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          dbUser.password
-        );
-
-        if (!isPasswordValid) {
-          throw new Error('Invalid credentials');
-        }
-
-        return {
-          id: dbUser.id,
-          email: dbUser.email || '',
-          name: dbUser.name || '',
-          image: dbUser.image || null,
-          role: dbUser.role,
-          isSuperUser: dbUser.isSuperUser
-        };
       }
     })
   ],
@@ -53,7 +66,7 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt"
   },
   secret: process.env.NEXTAUTH_SECRET,
-  debug: process.env.NODE_ENV === "development",
+  debug: true, // Enable debug mode
   pages: {
     signIn: '/login',
   },
