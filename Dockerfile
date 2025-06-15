@@ -20,9 +20,14 @@ RUN npx prisma generate
 # Copy the rest of the application
 COPY . .
 
-# Build the application
+# Set up environment variables for build
 ARG DATABASE_PUBLIC_URL
 ENV DATABASE_PUBLIC_URL=$DATABASE_PUBLIC_URL
+
+# Run migrations before build
+RUN npx prisma migrate deploy
+
+# Build the application
 RUN npm run build
 
 # Create startup script
@@ -31,8 +36,6 @@ RUN echo '#!/bin/sh' > /app/start.sh && \
     echo 'echo "Current directory: $(pwd)"' >> /app/start.sh && \
     echo 'echo "Listing prisma directory:"' >> /app/start.sh && \
     echo 'ls -la prisma/' >> /app/start.sh && \
-    echo 'echo "Running migrations..."' >> /app/start.sh && \
-    echo 'npx prisma migrate deploy' >> /app/start.sh && \
     echo 'echo "Running database seed..."' >> /app/start.sh && \
     echo 'npx prisma db seed' >> /app/start.sh && \
     echo 'echo "Verifying database setup..."' >> /app/start.sh && \
