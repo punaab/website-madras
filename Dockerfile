@@ -1,28 +1,24 @@
-FROM node:18-alpine
+FROM node:20-alpine AS base
 
-# Install OpenSSL and other required dependencies
-RUN apk add --no-cache openssl openssl-dev libc6-compat
-
+# Install dependencies only when needed
+FROM base AS deps
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Copy package files first for better caching
-COPY package*.json ./
+# Install dependencies based on the preferred package manager
+COPY package.json package-lock.json* ./
+RUN npm ci
 
-# Copy prisma directory first
-COPY prisma ./prisma/
-
-# Install dependencies without running postinstall
-RUN npm install --ignore-scripts
-
-# Generate Prisma client
-RUN npx prisma generate
-
-# Copy the rest of the application
+# Rebuild the source code only when needed
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Set up environment variables for build
-ARG DATABASE_PUBLIC_URL
-ENV DATABASE_PUBLIC_URL=$DATABASE_PUBLIC_URL
+# Set environment variables
+ENV DATABASE_URL=${DATABASE_PUBLIC_URL}
+ENV NEXTAUTH_URL=${NEXTAUTH_URL}
+ENV NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
 
 # Push schema changes to database
 RUN npx prisma db push --accept-data-loss
@@ -31,18 +27,36 @@ RUN npx prisma db push --accept-data-loss
 RUN npm run build
 
 # Create startup script
-RUN echo '#!/bin/sh' > /app/start.sh && \
-    echo 'echo "Running database setup..."' >> /app/start.sh && \
-    echo 'echo "Current directory: $(pwd)"' >> /app/start.sh && \
-    echo 'echo "Listing prisma directory:"' >> /app/start.sh && \
-    echo 'ls -la prisma/' >> /app/start.sh && \
-    echo 'echo "Running database seed..."' >> /app/start.sh && \
-    echo 'npx prisma db seed' >> /app/start.sh && \
-    echo 'echo "Verifying database setup..."' >> /app/start.sh && \
-    echo 'npx prisma db pull' >> /app/start.sh && \
-    echo 'echo "Starting application..."' >> /app/start.sh && \
-    echo 'npm start' >> /app/start.sh && \
-    chmod +x /app/start.sh
+RUN echo '#!/bin/sh\n\
+npx prisma db push --accept-data-loss\n\
+npm run start\n\
+' > /app/start.sh && chmod +x /app/start.sh
 
-# Start the application
+# Production image, copy all the files and run next
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV production
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/public ./public
+
+# Set the correct permission for prerender cache
+RUN mkdir .next
+RUN chown nextjs:nodejs .next
+
+# Automatically leverage output traces to reduce image size
+# https://nextjs.org/docs/advanced-features/output-file-tracing
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+
+EXPOSE 3000
+
+ENV PORT 3000
+ENV HOSTNAME "0.0.0.0"
+
 CMD ["/app/start.sh"] 
