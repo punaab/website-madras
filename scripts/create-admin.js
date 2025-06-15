@@ -1,39 +1,54 @@
 const { PrismaClient } = require('@prisma/client');
-const { hash } = require('bcryptjs');
+const bcrypt = require('bcryptjs');
+
+// Override the DATABASE_URL with DATABASE_PUBLIC_URL
+process.env.DATABASE_URL = process.env.DATABASE_PUBLIC_URL;
 
 const prisma = new PrismaClient();
 
-async function createAdmin() {
+async function main() {
   try {
-    const email = 'sean@madras.co.nz';
-    const password = 'Madras2024!';
-    const name = 'Sean Layton';
-
-    // Hash password with bcryptjs
-    const hashedPassword = await hash(password, 12);
-
-    // Create or update admin user
-    const admin = await prisma.user.upsert({
-      where: { email },
-      update: {
-        name,
-        password: hashedPassword,
-        role: 'ADMIN'
-      },
-      create: {
-        email,
-        name,
-        password: hashedPassword,
-        role: 'ADMIN'
+    // Check if admin user already exists
+    const existingAdmin = await prisma.user.findUnique({
+      where: {
+        email: 'sean@madras.co.nz'
       }
     });
 
-    console.log('Admin user created/updated successfully:', admin.email);
+    if (existingAdmin) {
+      console.log('Admin user already exists, updating password...');
+      const hashedPassword = await bcrypt.hash('Madras2024!', 10);
+      await prisma.user.update({
+        where: {
+          email: 'sean@madras.co.nz'
+        },
+        data: {
+          password: hashedPassword,
+          role: 'ADMIN',
+          isSuperUser: true
+        }
+      });
+      console.log('Admin user updated successfully');
+    } else {
+      console.log('Creating new admin user...');
+      const hashedPassword = await bcrypt.hash('Madras2024!', 10);
+      await prisma.user.create({
+        data: {
+          email: 'sean@madras.co.nz',
+          name: 'Sean Layton',
+          password: hashedPassword,
+          role: 'ADMIN',
+          isSuperUser: true
+        }
+      });
+      console.log('Admin user created successfully');
+    }
   } catch (error) {
-    console.error('Error creating admin user:', error);
+    console.error('Error:', error);
+    process.exit(1);
   } finally {
     await prisma.$disconnect();
   }
 }
 
-createAdmin(); 
+main(); 
