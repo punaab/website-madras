@@ -20,6 +20,7 @@ model User {
   email         String    @unique
   name          String?
   password      String
+  image         String?
   role          Role      @default(USER)
   isSuperUser   Boolean   @default(false)
   emailVerified DateTime?
