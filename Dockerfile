@@ -24,8 +24,8 @@ COPY . .
 ARG DATABASE_PUBLIC_URL
 ENV DATABASE_PUBLIC_URL=$DATABASE_PUBLIC_URL
 
-# Run migrations before build
-RUN npx prisma migrate deploy
+# Push schema changes to database
+RUN npx prisma db push --accept-data-loss
 
 # Build the application
 RUN npm run build
